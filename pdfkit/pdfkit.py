@@ -148,22 +148,26 @@ class PDFKit(object):
             except UnicodeDecodeError:
                 stderr = ''
 
-            if 'cannot connect to X server' in stderr:
-                raise IOError('%s\n'
-                            'You will need to run wkhtmltopdf within a "virtual" X server.\n'
-                            'Go to the link below for more information\n'
-                            'https://github.com/JazzCore/python-pdfkit/wiki/Using-wkhtmltopdf-without-X-server' % stderr)
+            if 'network error' in stderr:
+                # An asset on the page has probably caused a 404, ignore this
+                pass
+            else:
+                if 'cannot connect to X server' in stderr:
+                    raise IOError('%s\n'
+                                'You will need to run wkhtmltopdf within a "virtual" X server.\n'
+                                'Go to the link below for more information\n'
+                                'https://github.com/JazzCore/python-pdfkit/wiki/Using-wkhtmltopdf-without-X-server' % stderr)
 
-            if 'Error' in stderr:
-                raise IOError('wkhtmltopdf reported an error:\n' + stderr)
+                if 'Error' in stderr:
+                    raise IOError('wkhtmltopdf reported an error:\n' + stderr)
 
-            error_msg = stderr or 'Unknown Error'
-            raise IOError("wkhtmltopdf exited with non-zero code {0}. error:\n{1}".format(exit_code, error_msg))
-
-        # Since wkhtmltopdf sends its output to stderr we will capture it
-        # and properly send to stdout
-        if '--quiet' not in args:
-            sys.stdout.write(stderr.decode('utf-8'))
+                error_msg = stderr or 'Unknown Error'
+                raise IOError("wkhtmltopdf exited with non-zero code {0}. error:\n{1}".format(exit_code, error_msg))
+        else:
+            # Since wkhtmltopdf sends its output to stderr we will capture it
+            # and properly send to stdout
+            if '--quiet' not in args:
+                sys.stdout.write(stderr.decode('utf-8'))
 
         if not path:
             return stdout
